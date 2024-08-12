@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import math
+import math, time
 from GridProcessing import Grid
 import rospy
 from geometry_msgs.msg import Twist, TransformStamped
@@ -13,15 +13,33 @@ import numpy as np
 
 from utils_gazebo import hj_controller_1vs0, hj_contoller_defenders_dub_1vs1
 
+#### Game Settings ####
+grid_size = 100
+grid_size_theta = 200
+boundary = 2.0
+angularv = 0.4
+ctrl_freq = 20
 
+start = time.time()
+# New value function based on the 4x4 map
+# value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz.npy')
+# value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_0.4angularv_ctrl20hz.npy')
+# grid1vs0_dub = Grid(np.array([-boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi]), 3, np.array([grid_size, grid_size, grid_size_theta]), [2])
+# grid1vs1_dub = Grid(np.array([-boundary, -boundary, -math.pi, -boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi, boundary, boundary, math.pi]),
+#              6, np.array([28, 28, 28, 28, 28, 28]), [2, 5])
+
+# Original value function based on the 2x2 map
 value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_1.0angularv.npy')
-value1vs1_dub_20hz = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_1.0angularv_ctrl20hz.npy')
+value1vs1_dub_20hz = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_0.4angularv_ctrl20hz.npy')
 grid1vs1_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi, -1.0, -1.0, -math.pi]), 
                           np.array([1.0, 1.0, math.pi, 1.0, 1.0, math.pi]), 
                           6, np.array([28, 28, 28, 28, 28, 28]), [2,5])
 value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_1.0angularv.npy')
 grid1vs0_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi]), np.array([1.0, 1.0, math.pi]), 3, 
                     np.array([100, 100, 200]), [2])
+end = time.time()
+print(f"============= HJ value functions loaded Successfully! (Time: {end-start :.4f} seconds) =============")
+print(f"========== The shape of value1vs0_dub is {value1vs0_dub.shape}. ========== \n")
 rospy.loginfo("Value function has been loaded.")
 
 
@@ -87,8 +105,8 @@ def dubin_inital_check(initial_attacker):
 def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):   
     # print(attacker_data.pose[1].position.x)
     # print(defender_data.pose[2].position.x)
-    rate = rospy.Rate(100)
-
+    # rate = rospy.Rate(100)
+    rospy.loginfo("========== The 1vs1 game starts! ==========")
     # Filter the raw data
     filterd_attacker = filter(attacker_data.pose.pose)  # (attacker_state, defender_state)
     filterd_defender = filter(defender_data.pose.pose)
@@ -101,8 +119,8 @@ def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):
     joint_1vs1 = (current_attacker_state[0], current_attacker_state[1], current_attacker_state[2],
                   current_defender_state[0], current_defender_state[1], current_defender_state[2])
     joint_1vs1_slice = grid1vs1_dub.get_index(joint_1vs1)
-    # rospy.loginfo(f"The current value function for Defender is {value1vs1_dub[joint_1vs1_slice]}.\n")
-    rospy.loginfo(f"The current value function for Defender is {value1vs1_dub_20hz[joint_1vs1_slice]}.\n")
+    rospy.loginfo(f"The current value function for Defender is {value1vs1_dub[joint_1vs1_slice]}.\n")
+    # rospy.loginfo(f"The current value function for Defender is {value1vs1_dub_20hz[joint_1vs1_slice]}.\n")
 
     
 
@@ -110,12 +128,13 @@ def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):
     # attacker_state_slice = grid1vs0_dub.get_index(current_attacker_state)
     # value1vs0_dubs = value1vs0_dub[..., 0]
     control_attacker = hj_controller_1vs0(value1vs0_dub, grid1vs0_dub, current_attacker_state)
-    # rospy.loginfo(f"The control command of the attacker is {control_attacker}. \n")
+    rospy.loginfo(f"The control command of the attacker is {control_attacker}. \n")
 
     # defender control
-    # control_defender = hj_contoller_defenders_dub_1vs1(current_attacker_state, current_defender_state, value1vs1_dub, grid1vs1_dub)
-    control_defender = hj_contoller_defenders_dub_1vs1(current_attacker_state, current_defender_state, value1vs1_dub_20hz, grid1vs1_dub)
-
+    control_defender = hj_contoller_defenders_dub_1vs1(current_attacker_state, current_defender_state, value1vs1_dub, grid1vs1_dub)
+    # control_defender = hj_contoller_defenders_dub_1vs1(current_attacker_state, current_defender_state, value1vs1_dub_20hz, grid1vs1_dub)
+    # TODO: Hanyang debug whether it's the calculation that makes the Publisher slow
+    # control_defender = 1.0
     rospy.loginfo(f"The control command of the defender is {control_defender}. \n")
 
 
@@ -135,15 +154,15 @@ def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):
         rospy.loginfo("The attacker has been captured by the defender")
         rospy.signal_shutdown("The attacker has been captured by the defender.")
     else:
-        attacker_cmd.linear.x = 0.3  # 1.0
+        attacker_cmd.linear.x = 0.22 # 1.0
         attacker_cmd.angular.z = control_attacker[0][0]
-        defender_cmd.linear.x = 0.3
+        defender_cmd.linear.x = 0.22
         defender_cmd.angular.z = control_defender[0][0]
 
     attacker_pub.publish(attacker_cmd)
     defender_pub.publish(defender_cmd)
     
-    rate.sleep()
+    # rate.sleep()
 
 def cleanUp():
     cmd = Twist()

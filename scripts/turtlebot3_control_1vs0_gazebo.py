@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import math
+import math, time
 from GridProcessing import Grid
 import rospy
 from geometry_msgs.msg import Twist, TransformStamped
@@ -11,9 +11,25 @@ from message_filters import Subscriber, TimeSynchronizer, ApproximateTimeSynchro
 import rospy
 import numpy as np
 
-value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_1.0angularv.npy')
-grid1vs0_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi]), np.array([1.0, 1.0, math.pi]), 3, 
-                    np.array([100, 100, 200]), [2])
+#### Game Settings ####
+grid_size = 100
+grid_size_theta = 200
+boundary = 2.0
+angularv = 0.4
+ctrl_freq = 20
+
+start = time.time()
+# New value function based on the 4x4 map
+value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz.npy')
+grid1vs0_dub = Grid(np.array([-boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi]), 3, np.array([grid_size, grid_size, grid_size_theta]), [2])
+
+# Original value function based on the 2x2 map
+# value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_1.0angularv.npy')
+# grid1vs0_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi]), np.array([1.0, 1.0, math.pi]), 3, 
+#                     np.array([100, 100, 200]), [2])
+end = time.time()
+print(f"============= HJ value functions loaded Successfully! (Time: {end-start :.4f} seconds) =============")
+print(f"========== The shape of value1vs0_dub is {value1vs0_dub.shape}. ========== \n")
 rospy.loginfo("Value function has been loaded.")
 
 
@@ -213,7 +229,7 @@ def hj_controller_1vs0(value1vs0_dub, grid1vs0_dub, current_state):
 # vicon_data: TransformStamped = TransformStamped()
 
 def gazebo_data_callback(gazebo_d: Odometry):   
-
+    rospy.loginfo("========== The 1vs0 game starts! ==========")
     # rospy.loginfo(vicon_d.pose[1].position)
     # rospy.loginfo(gazebo_d.pose.pose)
     # Initialize the Publisher 
@@ -229,7 +245,7 @@ def gazebo_data_callback(gazebo_d: Odometry):
     rospy.loginfo(f"The control signal is {control_signal[0][0]}.")
 
 
-    # # rate = rospy.Rate(1)
+    # rate = rospy.Rate(20)
 
     cmd = Twist()
 
@@ -242,7 +258,7 @@ def gazebo_data_callback(gazebo_d: Odometry):
         hj_pub.publish(cmd)
         rospy.signal_shutdown("Reached Goal State")
     else:
-        cmd.linear.x = 0.3
+        cmd.linear.x = 0.22
         # cmd.linear.y = 0.707
         cmd.angular.z = control_signal[0][0]
         # cmd.linear.x = 0.707

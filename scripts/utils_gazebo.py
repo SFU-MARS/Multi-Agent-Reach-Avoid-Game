@@ -90,7 +90,7 @@ def spa_deriv(slice_index, value_function, grid, periodic_dims=[]):
     return spa_derivatives
 
 
-def optDistb_1vs1(spat_deriv, dMode="max", dMax=0.4):
+def optDistb_1vs1(spat_deriv, dMode="max", dMax=1):
     opt_d = dMax
     if spat_deriv[5] > 0:
         if dMode == "min":
@@ -169,14 +169,14 @@ def optCtrl_1vs0(spat_deriv, uMode="min"):
     spat_deriv (ndarray): the spatial derivatives of the value function
     uMode (str): the mode of the control input, "min" or "max"
     """
-    opt_u = 0.4 # the maximum angular rate of the TurtleBot3
+    opt_u = 1 # the maximum angular rate of the TurtleBot3
 
     if spat_deriv[2] > 0:
         if uMode == "min":
-            opt_u = -0.4
+            opt_u = -1
     else:
         if uMode == "max":
-            opt_u = -0.4
+            opt_u = -1
     return opt_u
 
 
