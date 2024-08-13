@@ -14,13 +14,14 @@ import numpy as np
 #### Game Settings ####
 grid_size = 100
 grid_size_theta = 200
-boundary = 2.0
+boundary = 1.0
 angularv = 0.4
 ctrl_freq = 20
 
 start = time.time()
 # New value function based on the 4x4 map
-value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz.npy')
+# value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz.npy')
+value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz_1.0map.npy')
 grid1vs0_dub = Grid(np.array([-boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi]), 3, np.array([grid_size, grid_size, grid_size_theta]), [2])
 
 # Original value function based on the 2x2 map
