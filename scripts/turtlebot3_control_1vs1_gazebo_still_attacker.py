@@ -25,16 +25,16 @@ start = time.time()
 value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz_1.0map.npy')
 
 # value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz.npy')
-# value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_0.4angularv_ctrl20hz_2.0map.npy')
-# # grid1vs0_dub = Grid(np.array([-boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi]), 3, np.array([grid_size, grid_size, grid_size_theta]), [2])
-# grid1vs1_dub = Grid(np.array([-boundary, -boundary, -math.pi, -boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi, boundary, boundary, math.pi]),
-#              6, np.array([28, 28, 28, 28, 28, 28]), [2, 5])
+value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_0.4angularv_ctrl20hz_2.0map.npy')
+# grid1vs0_dub = Grid(np.array([-boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi]), 3, np.array([grid_size, grid_size, grid_size_theta]), [2])
+grid1vs1_dub = Grid(np.array([-boundary, -boundary, -math.pi, -boundary, -boundary, -math.pi]), np.array([boundary, boundary, math.pi, boundary, boundary, math.pi]),
+             6, np.array([28, 28, 28, 28, 28, 28]), [2, 5])
 
 # Original value function based on the 2x2 map
-value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_1.0angularv_ctrl20hz_1.0map.npy')
-grid1vs1_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi, -1.0, -1.0, -math.pi]), 
-                          np.array([1.0, 1.0, math.pi, 1.0, 1.0, math.pi]), 
-                          6, np.array([28, 28, 28, 28, 28, 28]), [2,5])
+# value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_1.0angularv_ctrl20hz_1.0map.npy')
+# grid1vs1_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi, -1.0, -1.0, -math.pi]), 
+#                           np.array([1.0, 1.0, math.pi, 1.0, 1.0, math.pi]), 
+#                           6, np.array([28, 28, 28, 28, 28, 28]), [2,5])
 # value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_1.0angularv.npy')
 grid1vs0_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi]), np.array([1.0, 1.0, math.pi]), 3, np.array([100, 100, 200]), [2])
 end = time.time()
@@ -102,15 +102,19 @@ def dubin_inital_check(initial_attacker):
 
 # vicon_data: TransformStamped = TransformStamped()
 
-def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):   
+def gazebo_data_callback(defender_data: Odometry):   
     # print(attacker_data.pose[1].position.x)
     # print(defender_data.pose[2].position.x)
-    # rate = rospy.Rate(50)
+    rate = rospy.Rate(50)
     rospy.loginfo("========== The 1vs1 game starts! ==========")
+    attacker_data = Odometry()
+    attacker_data.pose.pose.position.x = -0.5
+    attacker_data.pose.pose.position.y = -0.5
+    attacker_data.pose.pose.orientation.z = 1.57
+
     # Filter the raw data
     filterd_attacker = filter(attacker_data.pose.pose)  # (attacker_state, defender_state)
     filterd_defender = filter(defender_data.pose.pose)
-    rospy.loginfo(f"Attacker data: {filterd_attacker} \n")
     rospy.loginfo(f"Defender data: {filterd_defender}. \n")
 
     current_attacker_state = np.array(filterd_attacker)
@@ -148,7 +152,8 @@ def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):
 
     if attacker_x >= 0.6 and attacker_x <= 0.8 and attacker_y >= 0.1 and attacker_y <= 0.30:
         rospy.loginfo("The attacker has reached Goal State")
-        rospy.signal_shutdown("The attacker has reached Goal State")    
+        rospy.signal_shutdown("The attacker has reached Goal State")
+    
     elif np.linalg.norm(current_defender_state[:2] - current_attacker_state[:2]) <= 0.30:
         rospy.loginfo("The attacker has been captured by the defender")
         rospy.signal_shutdown("The attacker has been captured by the defender.")
@@ -160,16 +165,15 @@ def gazebo_data_callback(attacker_data: Odometry, defender_data: Odometry):
         defender_cmd.linear.x = 0.22
         defender_cmd.angular.z = control_defender[0][0]
 
-    attacker_pub.publish(attacker_cmd)
+    # attacker_pub.publish(attacker_cmd)
     defender_pub.publish(defender_cmd)
     
-    # rate.sleep()
+    rate.sleep()
 
 def cleanUp():
     cmd = Twist()
     cmd.linear.x = 0
     cmd.angular.z = 0
-    attacker_pub.publish(cmd)
     defender_pub.publish(cmd)
 
 if __name__ == "__main__":
@@ -180,15 +184,11 @@ if __name__ == "__main__":
     rospy.on_shutdown(cleanUp)
 
     # Initialize the Publisher 
-    attacker_pub = rospy.Publisher("/tb3_0/cmd_vel", Twist, queue_size=20)
-    defender_pub = rospy.Publisher("/tb3_1/cmd_vel", Twist, queue_size=20)
+    defender_pub = rospy.Publisher("/tb3_1/cmd_vel", Twist, queue_size=100)
 
-    gazebo_sub_attacker = Subscriber("/tb3_0/odom", Odometry, queue_size=None)  #TODO: Hanyang: This matters!!! 2024.8.12
-    gazebo_sub_defender = Subscriber("/tb3_1/odom", Odometry, queue_size=None)  #TODO: Hanyang: This matters!!! 2024.8.12
+    gazebo_sub_defender = rospy.Subscriber("/tb3_1/odom", Odometry, queue_size=1, callback=gazebo_data_callback)  #TODO: Hanyang: This matters!!! 2024.8.12
 
     # ts = TimeSynchronizer([gazebo_sub_attacker, gazebo_sub_defender], queue_size=2) #TODO: Hanyang: This matters!!! 2024.8.12
     # ts = TimeSynchronizer([gazebo_sub_defender, gazebo_sub_attacker], queue_size=2) #TODO: Hanyang: This matters!!! 2024.8.12
-
-    ts = ApproximateTimeSynchronizer([gazebo_sub_attacker, gazebo_sub_defender], queue_size=4, slop=0.1)
-    ts.registerCallback(gazebo_data_callback)
+    
     rospy.spin()
