@@ -7,15 +7,16 @@ from geometry_msgs.msg import Twist, TransformStamped
 from message_filters import Subscriber, TimeSynchronizer, ApproximateTimeSynchronizer
 import numpy as np
 from utils import *
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_1.0angularv.npy')
+value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs1_grid28_medium_1.0angularv_ctrl20hz_1.0map.npy')
 grid1vs1_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi, -1.0, -1.0, -math.pi]), 
                           np.array([1.0, 1.0, math.pi, 1.0, 1.0, math.pi]), 
                           6, np.array([28, 28, 28, 28, 28, 28]), [2,5])
 
-value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_1.0angularv.npy')
-grid1vs0_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi]), np.array([1.0, 1.0, math.pi]), 3, 
-                    np.array([100, 100, 200]), [2])
+value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/DubinCar1vs0_grid100_medium_0.4angularv_20hz_1.0map.npy')
+grid1vs0_dub: Grid = Grid(np.array([-1.0, -1.0, -math.pi]), np.array([1.0, 1.0, math.pi]), 3, np.array([100, 100, 200]), [2])
+
 rospy.loginfo("Value functions has been loaded.")
 
 
@@ -41,8 +42,9 @@ def filter(raw_data: TransformStamped):
 
     x = raw_data.transform.translation.x
     y = raw_data.transform.translation.y
+    angles = euler_from_quaternion([raw_data.transform.rotation.x, raw_data.transform.rotation.y, raw_data.transform.rotation.z, raw_data.transform.rotation.w])
     # heading = raw_data.transform.rotation.z
-    heading = check_heading(raw_data.transform.rotation.z)
+    heading = check_heading(angles[2])
 
     filtered_data = [x, y, heading]
 
@@ -50,11 +52,7 @@ def filter(raw_data: TransformStamped):
 
 
 def vicon_data_callback(attacker_data: TransformStamped, defender_data: TransformStamped):
-    rate = rospy.Rate(200)
-
-    # Initialize the Publisher 
-    attacker_pub = rospy.Publisher("/turtlebot2/cmd_vel", Twist, queue_size=30)
-    defender_pub = rospy.Publisher("/turtlebot3/cmd_vel", Twist, queue_size=30)
+    # rate = rospy.Rate(200)
 
     # Filter the raw data
     filterd_attacker = filter(attacker_data)  # (attacker_state, defender_state)
@@ -106,29 +104,27 @@ def vicon_data_callback(attacker_data: TransformStamped, defender_data: Transfor
     attacker_pub.publish(attacker_cmd)
     defender_pub.publish(defender_cmd)
 
-    rate.sleep()
-
-
-
-# def turtleCallBack(vicon_d: TransformStamped, vicon_d2):
-#     rospy.loginfo(f"========== vicon_d: {vicon_d} ==========")
-#     rospy.loginfo(f"++++++++++ vicon_d2: {vicon_d2} ++++++++++")
+    # rate.sleep()
 
 if __name__ == "__main__":
     rospy.init_node("hj_controller_1vs1")
 
     rospy.loginfo("Initialize the hj controller for 1vs1.")
-    rate = rospy.Rate(200)
+    # rate = rospy.Rate(200)
 
+
+    # Initialize the Publisher 
+    attacker_pub = rospy.Publisher("/turtlebot2/cmd_vel", Twist, queue_size=30)
+    defender_pub = rospy.Publisher("/turtlebot3/cmd_vel", Twist, queue_size=30)
 
     # attacker_sub = Subscriber('/vicon/turtlebot3_2/root', TransformStamped, queue_size=30)
     # defender_sub = Subscriber('/vicon/turtlebot3_3/root', TransformStamped, queue_size=30)
 
-    attacker_sub = Subscriber('/vicon/turtlebot3_2/turtlebot3_2', TransformStamped, queue_size=30)
-    defender_sub = Subscriber('/vicon/turtlebot3_3/turtlebot3_3', TransformStamped, queue_size=30)
+    attacker_sub = Subscriber('/vicon/turtlebot3_2/turtlebot3_2', TransformStamped, queue_size=1)
+    defender_sub = Subscriber('/vicon/turtlebot3_3/turtlebot3_3', TransformStamped, queue_size=1)
 
     
-    ts = TimeSynchronizer([attacker_sub, defender_sub], queue_size=60)
+    ts = TimeSynchronizer([attacker_sub, defender_sub], queue_size=2)
     # ts = ApproximateTimeSynchronizer([attacker_sub, defender_sub], queue_size=60)
     ts.registerCallback(vicon_data_callback)
 
