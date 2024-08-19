@@ -30,10 +30,14 @@ The repository for the multi-agent reach-avoid game using HJ reachability.
 5. Once connected through ssh, run the bringup file for the Turtlebot3 using `roslaunch turtlebot3_bringup turtlebot3_robot.launch`
 
 #### 1vs0 Game
-1. Once the Turtlebot3 is up, bringup is running and Turtlebot3 is placed on the field. Simply run the specific script using, `rosrun turtlebot3_controller {name of python script}`. It is recommended to restart the vicon_bridge roslaunch just so that it is sending up-to-date information about the Turtlebots
+1. It is recommended to restart the vicon_bridge roslaunch just so that it is sending up-to-date information about the Turtlebots. Once the Turtlebot3 is up, bringup is running and Turtlebot3 is placed on the field. Simply run the specific script using, `rosrun turtlebot3_controller {name of python script}`. 
 
 #### 1vs1 Game
-1. Once both Turtlebot3 is up, bringup is running via `ssh` on both bots, and they are placed on the field. Simply run the specific script using, `rosrun turtlebot3_controller {name of python script}`. It is recommended to restart the vicon_bridge roslaunch just so that it is sending up-to-date information about the Turtlebots
+1. It is recommended to restart the vicon_bridge roslaunch just so that it is sending up-to-date information about the Turtlebots. Once both Turtlebot3 is up, bringup is running via `ssh` on both bots, and they are placed on the field. Simply run the specific script using, `rosrun turtlebot3_controller {name of python script}`. 
+
+#### 1vs1 Game - Manual Control of the Attacker
+1. In a seperate terminal, ssh into the attacker Turtlebot3. Run the following command, `roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch` (assuming bringup is already running). Then the attacker can be controlled using the W-A-S-D-X keys. The specifics are given when you run the launch file.
+2. It is recommended to restart the vicon_bridge roslaunch just so that it is sending up-to-date information about the Turtlebots. Once both Turtlebot3 is up, bringup is running via `ssh` on both bots, and they are placed on the field. Simply run the specific script using, `rosrun turtlebot3_controller {name of python script}` and start controlling the attacker through the terminal.  
 
 
 ## Things to keep in mind
