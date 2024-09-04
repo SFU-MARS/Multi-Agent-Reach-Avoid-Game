@@ -1,0 +1,78 @@
+algo: rarl
+algo_config:
+  actor_lr: 0.0003
+  adversary_iterations: 10
+  agent_iterations: 10
+  clip_obs: 10.0
+  clip_param: 0.2
+  clip_reward: 10.0
+  critic_lr: 0.001
+  deque_size: 10
+  entropy_coef: 0.01
+  eval_batch_size: 10
+  eval_interval: 20000
+  eval_save_best: true
+  gae_lambda: 0.95
+  gamma: 0.99
+  hidden_dim: 64
+  log_interval: 10
+  max_ctrl_steps: 300
+  max_env_steps: 10000000
+  max_grad_norm: 0.5
+  mini_batch_size: 64
+  norm_obs: false
+  norm_reward: false
+  num_checkpoints: 10
+  num_workers: 1
+  opt_epochs: 10
+  pretrained: null
+  render_height: 400
+  render_width: 640
+  rollout_batch_size: 32
+  rollout_steps: 2048
+  save_interval: 20000
+  target_kl: 0.01
+  tensorboard: true
+  train_adversary: true
+  train_protagonist: true
+  training: true
+  use_clipped_value: false
+  use_gae: false
+device: cuda
+distb_level: 1.0
+output_dir: training_results/dubin_rarl_game/rarl/seed_42/10000000steps
+restore: null
+seed: 42
+tag: temp
+task: dubin_rarl_game
+task_config:
+  adversary_disturbance: action
+  adversary_disturbance_offset: 0.0
+  adversary_disturbance_scale: 1.0
+  constraint_penalty: -1
+  constraints: null
+  ctrl_freq: 20
+  disturbances: null
+  done_on_out_of_bound: true
+  done_on_violation: false
+  episode_len_sec: 15
+  gui: false
+  inertial_prop: null
+  inertial_prop_randomization_info: null
+  info_in_reset: true
+  init_state: null
+  init_state_randomization_info: null
+  normalized_rl_action_space: false
+  obs_goal_horizon: 0
+  obs_wrap_angle: false
+  pyb_freq: 20
+  randomized_inertial_prop: false
+  randomized_init: true
+  render_height: 400
+  render_width: 640
+  rew_act_weight: 0.0001
+  rew_exponential: true
+  rew_state_weight: 1.0
+  use_constraint_penalty: false
+  verbose: false
+use_gpu: true

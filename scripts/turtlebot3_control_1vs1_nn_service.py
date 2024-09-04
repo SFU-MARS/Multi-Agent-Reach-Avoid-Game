@@ -17,9 +17,9 @@ from gymnasium import spaces
 value1vs0_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/1vs0Dubin_easier.npy')
 grid1vs0_dub: Grid = Grid(np.array([-1.1, -1.1, -math.pi]), np.array([1.1, 1.1, math.pi]), 3, np.array([100, 100, 200]), [2])
 
-value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/1vs1Dubin_easier.npy')
-grid1vs1_dub: Grid = Grid(np.array([-1.1, -1.1, -math.pi, -1.1, -1.1, -math.pi]), np.array([1.1, 1.1, math.pi, 1.1, 1.1, math.pi]), 
-                        6, np.array([28, 28, 28, 28, 28, 28]), [2, 5])
+# value1vs1_dub = np.load('/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/values/1vs1Dubin_easier.npy')
+# grid1vs1_dub: Grid = Grid(np.array([-1.1, -1.1, -math.pi, -1.1, -1.1, -math.pi]), np.array([1.1, 1.1, math.pi, 1.1, 1.1, math.pi]), 
+#                         6, np.array([28, 28, 28, 28, 28, 28]), [2, 5])
 
 # load the trained model
 trained_model = "/home/marslab/catkin_ws/src/turtlebot3_controller/scripts/dubin_HARLT.zip"
